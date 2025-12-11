@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dimensionamento Solar & Editor de Projetos</title>
+    
+    <!-- Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Estilo Externo -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <!-- Cabeçalho Principal -->
+        <header>
+            <!-- Título Focado no Produto -->
+            <h1><i class="fas fa-swimming-pool"></i> Simulador de Aquecimento Solar</h1>
+            
+            <!-- Subtítulo Focado na Solução -->
+            <p class="subtitle">
+                Dimensionamento prático de coletores para piscinas &bull; TS Solar
+            </p>
+            
+            <button id="btn-compass-start" style="display:none; margin: 10px auto; padding: 5px 10px; font-size: 0.8rem;">
+                <i class="fas fa-compass"></i> Ativar Bússola
+            </button>
+        </header>
+        
+        <div class="main-content">
+            
+            <!-- COLUNA ESQUERDA: Área de Desenho + CALCULADORA (Fica abaixo do desenho) -->
+            <div class="editor-container">
+                <!-- Bússola Fixa -->
+                <div class="compass-overlay">
+                    <div class="compass-arrow north"><span>N</span></div>
+                    <div class="compass-arrow south"><span>S</span></div>
+                    <div class="compass-arrow east"><span>L</span></div>
+                    <div class="compass-arrow west"><span>O</span></div>
+                    <div class="compass-center"><i class="fas fa-compass"></i></div>
+                </div>
+                
+                <h2 class="section-title"><i class="fas fa-drafting-compass"></i> Área de Projeto</h2>
+                
+                <!-- O Canvas onde os elementos (divs) serão desenhados via JS -->
+                <div class="canvas" id="canvas">
+                    <!-- Elementos são inseridos aqui dinamicamente -->
+                </div>
+                
+                <!-- Contadores de Elementos -->
+                <div class="element-counter">
+                    <div class="counter-box roof-counter">
+                        <span>Telhados</span>
+                        <span class="counter-value" id="roof-count">0</span>
+                    </div>
+                    <div class="counter-box pool-counter">
+                        <span>Piscinas</span>
+                        <span class="counter-value" id="pool-count">0</span>
+                    </div>
+                </div>
+
+                <!-- ======================================================== -->
+                <!-- 4. CALCULADORA SOLAR (Movida para cá para fluxo Mobile) -->
+                <!-- ======================================================== -->
+                <div class="control-group calculator-section" style="margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px;">
+                    <!-- Título Limpo (Sem emoji de placa) -->
+                    <h2 class="control-title solar-title">Dimensionamento</h2>
+                    
+                    <button id="btn-calculate-solar" class="calc-solar-btn">
+                        POSICIONAR PLACAS E CALCULAR
+                    </button>
+
+                    <!-- Resultados (Oculto até calcular) -->
+                    <div id="solar-results" class="results-container" style="display: none;">
+                        
+                        <!-- Alerta Prainha -->
+                        <div id="prainha-alert" style="display:none; background:#fff3e0; color:#ef6c00; padding:10px; margin-bottom:15px; border-radius:6px; font-size:0.9rem; border: 1px solid #ffe0b2;">
+                            <i class="fas fa-exclamation-triangle"></i> <strong>Prainha/Spa:</strong> +30% de carga térmica aplicada.
+                        </div>
+
+                        <!-- Resumo dos Fatores -->
+                        <div class="calculation-summary">
+                            <p><i class="fas fa-info-circle"></i> <strong>Parâmetros de Projeto:</strong></p>
+                            <ul>
+                                <li>Piscina: <span id="res-pool-area">0</span> m²</li>
+                                <li>Telhado Útil: <span id="res-roof-dims">0x0</span>m</li>
+                                <li><strong>Demanda Térmica: <span id="res-required-area">0</span> m²</strong></li>
+                            </ul>
+                        </div>
+
+                        <!-- Tabela de Opções -->
+                        <div class="collectors-table-wrapper">
+                            <table class="collectors-table">
+                                <thead>
+                                    <tr>
+                                        <th>Coletor</th>
+                                        <th>Qtd</th>
+                                        <th>Baterias</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="collectors-tbody">
+                                    <!-- Preenchido via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Hidráulica da MELHOR OPÇÃO -->
+                        <div class="hydraulics-info">
+                            <h4 id="best-option-title"><i class="fas fa-star"></i> Recomendado: Coletor -</h4>
+                            <div class="hydro-grid">
+                                <div class="hydro-item">
+                                    <span>Baterias</span>
+                                    <strong id="res-batteries">0</strong>
+                                </div>
+                                <div class="hydro-item">
+                                    <span>Kits Fechamento</span>
+                                    <strong id="res-kits">0</strong>
+                                </div>
+                                <div class="hydro-item">
+                                    <span>VQV</span>
+                                    <strong id="res-vqv">0</strong>
+                                </div>
+                            </div>
+                            
+                            <!-- Botão WhatsApp -->
+                            <a id="btn-whatsapp" href="#" target="_blank" class="whatsapp-btn">
+                                <i class="fab fa-whatsapp"></i> SOLICITAR ORÇAMENTO
+                            </a>
+                        </div>
+                        
+                        <!-- Avisos Legais e Manuais -->
+                        <div class="technical-disclaimer">
+                            <h4><i class="fas fa-shield-alt"></i> Notas Importantes</h4>
+                            
+                            <ul class="disclaimer-list">
+                                <li>
+                                    <strong>Exclusividade:</strong> Esta ferramenta foi calibrada exclusivamente para a eficiência térmica dos coletores <strong>TS-Solar</strong>. Não utilize para outras marcas.
+                                </li>
+                                <li>
+                                    <strong>Caráter Orientativo:</strong> O software fornece uma estimativa baseada em dados teóricos. <strong>É indispensável</strong> a consulta de um técnico instalador responsável.
+                                </li>
+                                <li>
+                                    <strong>Obstruções e Sombreamento:</strong> O cálculo assume área livre. Desconte manualmente áreas de sombra (árvores, prédios) ou obstruções (chaminés).
+                                </li>
+                                <li>
+                                    <strong>Uso da Bússola:</strong> A ferramenta utiliza o magnetômetro do celular. Para precisão, mantenha o aparelho <strong>totalmente plano</strong>. <em>Dica: O Sol nasce no Leste.</em>
+                                </li>
+                            </ul>
+                        
+                            <div class="manual-section">
+                                <p>Para garantir a garantia e segurança, siga rigorosamente as normas de instalação:</p>
+                                <a href="https://ts-solar.com.br/wp-content/uploads/2025/07/Novo-Manual-coletor-de-Rosca-04072025-Versao-de-impressao.pdf" target="_blank" class="manual-btn">
+                                    <i class="fas fa-file-pdf"></i> ABRIR MANUAL DE INSTALAÇÃO
+                                </a>
+                            </div>
+                        </div>
+
+                    </div> <!-- Fim solar-results -->
+                </div> <!-- Fim calculator-section -->
+
+            </div> <!-- Fim editor-container -->
+            
+            <!-- COLUNA DIREITA: Apenas Controles e Inputs -->
+            <div class="controls-container">
+                
+                <!-- 1. DADOS GLOBAIS DO PROJETO (Fatores Térmicos) -->
+                <div class="control-group project-data">
+                    <h2 class="control-title"><i class="fas fa-temperature-high"></i> Dados do Projeto</h2>
+                    
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="climate-select">Clima da Região:</label>
+                            <select id="climate-select">
+                                <option value="muito_quente">Muito Quente</option>
+                                <option value="quente">Quente</option>
+                                <option value="frio" selected>Frio</option>
+                                <option value="muito_frio">Muito Frio</option>
+                            </select>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="usage-select">Finalidade de Uso:</label>
+                            <select id="usage-select">
+                                <option value="residencial" selected>Residencial ou Academia</option>
+                                <option value="clubes">Clubes</option>
+                                <option value="spa">Spa ou Fisioterapia</option>
+                                <option value="treinamento">Treinamento</option>
+                            </select>
+                        </div>						
+                        <div class="input-group">
+                            <label for="connection-type">Ligação Hidráulica:</label>
+                            <select id="connection-type">
+                                <option value="series" selected>Série (Padrão)</option>
+                                <option value="parallel">Paralelo</option>
+                            </select>
+                        </div>						
+                    </div>
+                </div>
+
+                <!-- 2. ADICIONAR ELEMENTOS -->
+                <div class="control-group">
+                    <h2 class="control-title"><i class="fas fa-plus-circle"></i> Adicionar Elemento</h2>
+                    
+                    <!-- Seletores de Tipo -->
+                    <div class="element-type-selector">
+                        <div class="type-btn roof-btn active" data-type="roof">
+                            <i class="fas fa-home"></i> Telhado
+                        </div>
+                        <div class="type-btn pool-btn" data-type="pool">
+                            <i class="fas fa-water"></i> Piscina
+                        </div>
+                    </div>
+                    
+                    <!-- Inputs de Medidas -->
+                    <div class="measurement-inputs">
+                        <div class="input-group">
+                            <label for="element-length">Largura (m):</label>
+                            <input type="number" id="element-length" step="0.1" value="5.30">
+                        </div>
+                        <div class="input-group">
+                            <label for="element-width">Comprimento (m):</label>
+                            <input type="number" id="element-width" step="0.1" value="3.20">
+                        </div>
+                    </div>
+
+                    <!-- Configurações Específicas de TELHADO -->
+                    <div id="roof-specifics" class="specific-options">
+                        <label>Tipo de Telhado:</label>
+                        <div class="option-buttons">
+                            <button class="face-btn active" data-faces="1">1 Face (Platibanda)</button>
+                            <button class="face-btn" data-faces="2">2 Faces (Duas Águas)</button>
+                            <button class="face-btn" data-faces="4" style="display: none;">4 Faces</button>
+                        </div>
+                        
+                        <label style="margin-top: 10px;">Orientação da Queda (Instalação):</label>
+                        <div class="orientation-controls">
+                            <button id="rotate-left" title="Girar Esquerda"><i class="fas fa-undo"></i></button>
+                            <span id="current-orientation-display">NORTE</span>
+                            <button id="rotate-right" title="Girar Direita"><i class="fas fa-redo"></i></button>
+                        </div>
+                        <small class="hint-text">*O sistema detectará automaticamente se a face é Norte, Sul, Leste ou Oeste baseado na rotação.</small>
+                    </div>
+
+                    <!-- Configurações Específicas de PISCINA -->
+                    <div id="pool-specifics" class="specific-options" style="display: none;">
+                        <label>Formato:</label>
+                        <div class="option-buttons" style="margin-bottom: 15px;">
+                            <button class="shape-btn active" data-shape="rectangular">Retangular</button>
+                            <button class="shape-btn" data-shape="circular">Circular</button>
+                        </div>
+                    
+                        <label>Definir tamanho por:</label>
+                        <div class="option-buttons" style="margin-bottom: 10px;">
+                            <button class="mode-btn active" data-mode="dim">Medidas (m)</button>
+                            <button class="mode-btn" data-mode="vol">Litragem (L)</button>
+                        </div>
+                    
+                        <!-- Input de Volume (Escondido inicialmente) -->
+                        <div class="input-group" id="vol-input-group" style="display: none;">
+                            <label for="pool-volume">Volume Total (Litros):</label>
+                            <input type="number" id="pool-volume" value="30000" step="1000">
+                        </div>
+                    
+                        <div class="input-group" style="margin-top: 10px;">
+                            <label for="pool-depth">Profundidade Média (m):</label>
+                            <input type="number" id="pool-depth" step="0.1" value="1.40">
+                        </div>
+                    </div>
+
+                    <!-- Botão de Ação -->
+                    <button class="add-btn" id="add-element">
+                        <i class="fas fa-plus"></i> Inserir no Projeto
+                    </button>
+                </div>
+
+                <!-- 3. GERENCIAMENTO E SELEÇÃO -->
+                <div class="control-group" id="selection-panel" style="display: none;">
+                    <h2 class="control-title highlight"><i class="fas fa-mouse-pointer"></i> Elemento Selecionado</h2>
+                    
+                    <div class="selected-info-grid">
+                        <div class="info-item">
+                            <strong>Tipo:</strong> <span id="sel-type">-</span>
+                        </div>
+                        <div class="info-item">
+                            <strong>Área Total:</strong> <span id="sel-area">-</span> m²
+                        </div>
+                        <div class="info-item" id="info-useful-area">
+                            <strong>Área Útil (c/ margem):</strong> <span id="sel-useful-area">-</span> m²
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="delete-btn" id="delete-selected"><i class="fas fa-trash"></i> Remover</button>
+                    </div>
+                </div>
+
+                <!-- Botão Limpar Tudo -->
+                <button class="clear-all-btn" id="delete-all">
+                    <i class="fas fa-trash-alt"></i> Limpar Projeto Inteiro
+                </button>
+
+            </div> <!-- Fim controls-container -->
+        </div> <!-- Fim main-content -->
+        
+        <footer>
+            <p>
+                &copy; Todos os direitos reservados a 
+                <a href="https://ts-solar.com.br/" target="_blank" class="company-link">TS.Solar</a>
+                <br>
+                <span style="font-size: 0.75rem; color: #999;">CNPJ 20.216.840/0001-01</span>
+            </p>
+            <p style="margin-top: 8px;">
+                Desenvolvido por 
+                <a href="https://qg-digital.github.io/institucional/" target="_blank" class="dev-link">QG.Digital</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Lógica JS -->
+    <script src="script.js"></script>
+</body>
+</html>
